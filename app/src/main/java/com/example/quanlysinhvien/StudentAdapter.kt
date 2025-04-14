@@ -5,10 +5,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 
 class StudentAdapter(
-    private val students: List<Student>,
+    private val students: MutableList<Student>,
     private val onDeleteClick: (Int) -> Unit
 ) : RecyclerView.Adapter<StudentAdapter.StudentViewHolder>() {
 
@@ -16,6 +17,15 @@ class StudentAdapter(
         val nameTextView: TextView = view.findViewById(R.id.textViewName)
         val idTextView: TextView = view.findViewById(R.id.textViewId)
         val deleteButton: ImageButton = view.findViewById(R.id.buttonDelete)
+
+        fun bind(student: Student, onDeleteClick: (Int) -> Unit) {
+            nameTextView.text = student.name
+            idTextView.text = student.id
+            
+            deleteButton.setOnClickListener {
+                onDeleteClick(adapterPosition)
+            }
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): StudentViewHolder {
@@ -25,13 +35,9 @@ class StudentAdapter(
     }
 
     override fun onBindViewHolder(holder: StudentViewHolder, position: Int) {
-        val student = students[position]
-        holder.nameTextView.text = student.name
-        holder.idTextView.text = student.id
-        holder.deleteButton.setOnClickListener {
-            onDeleteClick(position)
-        }
+        holder.bind(students[position], onDeleteClick)
     }
 
     override fun getItemCount() = students.size
+
 }

@@ -3,8 +3,10 @@ package com.example.quanlysinhvien
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
-import android.widget.LinearLayout
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.DefaultItemAnimator
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 
@@ -20,48 +22,88 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        initViews()
+        setupRecyclerView()
+        setupListeners()
+        addSampleData()
+    }
+
+    private fun initViews() {
         nameEditText = findViewById(R.id.editTextName)
         idEditText = findViewById(R.id.editTextId)
         addButton = findViewById(R.id.buttonAdd)
         recyclerView = findViewById(R.id.recyclerViewStudents)
+    }
 
+    private fun setupRecyclerView() {
         adapter = StudentAdapter(studentList) { position ->
             removeStudent(position)
         }
-        recyclerView.layoutManager = LinearLayoutManager(this)
-        recyclerView.adapter = adapter
-
+        
+        recyclerView.apply {
+            layoutManager = LinearLayoutManager(this@MainActivity)
+            addItemDecoration(DividerItemDecoration(this@MainActivity, DividerItemDecoration.VERTICAL))
+            itemAnimator = DefaultItemAnimator()
+            adapter = this@MainActivity.adapter
+            setHasFixedSize(true)
+        }
+    }
+    
+    private fun setupListeners() {
         addButton.setOnClickListener {
             addStudent()
         }
-
-        addSampleData()
     }
 
     private fun addStudent() {
         val name = nameEditText.text.toString().trim()
         val id = idEditText.text.toString().trim()
 
-        if (name.isNotEmpty() && id.isNotEmpty()) {
-            studentList.add(0, Student(name, id))
-            adapter.notifyItemInserted(0)
-            recyclerView.scrollToPosition(0)
-
-            // Clear input fields
-            nameEditText.text.clear()
-            idEditText.text.clear()
+        if (name.isEmpty() || id.isEmpty()) {
+            Toast.makeText(this, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show()
+            return
         }
+
+        // Check for duplicate student ID
+        if (studentList.any { it.id == id }) {
+            Toast.makeText(this, "MSSV đã tồn tại", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val newStudent = Student(name, id)
+        studentList.add(0, newStudent)
+        adapter.notifyItemInserted(0)
+        recyclerView.scrollToPosition(0)
+
+        // Clear input fields
+        nameEditText.text.clear()
+        idEditText.text.clear()
+        nameEditText.requestFocus()
     }
 
     private fun removeStudent(position: Int) {
-        studentList.removeAt(position)
-        adapter.notifyItemRemoved(position)
+        if (position >= 0 && position < studentList.size) {
+            val removedStudent = studentList[position]
+            studentList.removeAt(position)
+            adapter.notifyItemRemoved(position)
+            
+            // Show removal confirmation
+            Toast.makeText(
+                this, 
+                "Đã xóa sinh viên: ${removedStudent.name}", 
+                Toast.LENGTH_SHORT
+            ).show()
+        }
     }
 
     private fun addSampleData() {
-        studentList.add(Student("Họ tên sinh viên 1", "MSSV1"))
-        studentList.add(Student("Họ tên sinh viên 2", "MSSV2"))
-        studentList.add(Student("Họ tên sinh viên 3", "MSSV3"))
+        val samples = listOf(
+            Student("Nguyễn Văn A", "MSSV1"),
+            Student("Trần Thị B", "MSSV2"),
+            Student("Lê Hoàng C", "MSSV3")
+        )
+        
+        studentList.addAll(samples)
         adapter.notifyDataSetChanged()
     }
 }
